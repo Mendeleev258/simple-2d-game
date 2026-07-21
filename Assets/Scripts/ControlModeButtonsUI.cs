@@ -8,8 +8,12 @@ public class ControlModeButtonsUI : MonoBehaviour
     private static readonly Color SelectedColor = new(0.16f, 0.55f, 0.32f, 1f);
 
     private readonly Dictionary<PlayerControlMode, Image> buttonImages = new();
+    private readonly List<GameObject> menuContent = new();
     private PlayerInputReader inputReader;
     private GameObject joystickRoot;
+    private RectTransform menuRect;
+    private Image menuBackground;
+    private bool isMenuOpen;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateMenu()
@@ -59,19 +63,61 @@ public class ControlModeButtonsUI : MonoBehaviour
     {
         inputReader = reader;
         joystickRoot = GameObject.Find("JoystickBackground");
+        menuRect = GetComponent<RectTransform>();
+        menuBackground = GetComponent<Image>();
 
+        CreateToggleButton();
         CreateLabel("Управление", new Vector2(0f, -12f), 26);
         CreateButton("Клавиатура", PlayerControlMode.Keyboard, -58f);
         CreateButton("Джойстик", PlayerControlMode.Joystick, -108f);
         CreateButton("Гироскоп", PlayerControlMode.Gyroscope, -158f);
 
         ApplyMode(inputReader.ControlMode);
+        SetMenuOpen(false);
+    }
+
+    private void CreateToggleButton()
+    {
+        GameObject buttonObject = new("ToggleInputMenu", typeof(RectTransform), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(transform, false);
+
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-4f, -4f);
+        rect.sizeDelta = new Vector2(48f, 48f);
+
+        Image image = buttonObject.GetComponent<Image>();
+        image.color = SelectedColor;
+
+        Button button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+        button.onClick.AddListener(() => SetMenuOpen(!isMenuOpen));
+
+        GameObject textObject = new("Text", typeof(RectTransform), typeof(Text));
+        textObject.transform.SetParent(buttonObject.transform, false);
+
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        Text text = textObject.GetComponent<Text>();
+        text.text = "≡";
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.fontSize = 30;
+        text.fontStyle = FontStyle.Bold;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.color = Color.white;
     }
 
     private void CreateLabel(string caption, Vector2 position, int fontSize)
     {
         GameObject labelObject = new("Title", typeof(RectTransform), typeof(Text));
         labelObject.transform.SetParent(transform, false);
+        menuContent.Add(labelObject);
 
         RectTransform rect = labelObject.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0f, 1f);
@@ -92,6 +138,7 @@ public class ControlModeButtonsUI : MonoBehaviour
     {
         GameObject buttonObject = new(caption, typeof(RectTransform), typeof(Image), typeof(Button));
         buttonObject.transform.SetParent(transform, false);
+        menuContent.Add(buttonObject);
 
         RectTransform rect = buttonObject.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0f, 1f);
@@ -138,5 +185,25 @@ public class ControlModeButtonsUI : MonoBehaviour
         {
             joystickRoot.SetActive(mode == PlayerControlMode.Joystick);
         }
+
+        SetMenuOpen(false);
+    }
+
+    private void SetMenuOpen(bool isOpen)
+    {
+        isMenuOpen = isOpen;
+
+        foreach (GameObject contentObject in menuContent)
+        {
+            contentObject.SetActive(isOpen);
+        }
+
+        menuRect.sizeDelta = isOpen
+            ? new Vector2(280f, 210f)
+            : new Vector2(56f, 56f);
+
+        menuBackground.color = isOpen
+            ? new Color(0.05f, 0.06f, 0.08f, 0.85f)
+            : Color.clear;
     }
 }
