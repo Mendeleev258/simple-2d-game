@@ -16,7 +16,7 @@ public class ControlModeButtonsUI : MonoBehaviour
     private bool isMenuOpen;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreateMenu()
+    public static void EnsureCreated()
     {
         if (FindFirstObjectByType<ControlModeButtonsUI>() != null)
         {
@@ -207,3 +207,4 @@ public class ControlModeButtonsUI : MonoBehaviour
             : Color.clear;
     }
 }
+
