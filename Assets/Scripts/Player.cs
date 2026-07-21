@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -11,6 +12,8 @@ public class Player : MonoBehaviour
 
     private Rigidbody2D rb;
     private PlayerInputReader inputReader;
+    private Coroutine speedModifierCoroutine;
+    private float speedMultiplier = 1f;
 
     private void Awake()
     {
@@ -31,10 +34,31 @@ public class Player : MonoBehaviour
     private void FixedUpdate()
     {
         Vector2 direction = Vector2.ClampMagnitude(inputReader.Movement, 1f);
-        Vector2 movement = direction * movingSpeed * Time.fixedDeltaTime;
+        Vector2 movement = direction * (movingSpeed * speedMultiplier) * Time.fixedDeltaTime;
 
         rb.MovePosition(rb.position + movement);
     }
+
+    public void ApplySpeedMultiplier(float multiplier, float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+        {
+            return;
+        }
+
+        if (speedModifierCoroutine != null)
+        {
+            StopCoroutine(speedModifierCoroutine);
+        }
+
+        speedModifierCoroutine = StartCoroutine(ApplySpeedMultiplierRoutine(multiplier, duration));
+    }
+
+    private IEnumerator ApplySpeedMultiplierRoutine(float multiplier, float duration)
+    {
+        speedMultiplier = multiplier;
+        yield return new WaitForSeconds(duration);
+        speedMultiplier = 1f;
+        speedModifierCoroutine = null;
+    }
 }
-
-
